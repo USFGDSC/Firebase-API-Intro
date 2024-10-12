@@ -1,95 +1,109 @@
-import Image from "next/image";
-import styles from "./page.module.css";
+"use client"
+import styles from './page.module.css'
+import { FaClipboardList } from "react-icons/fa6";
+import { useState, useEffect } from 'react';
 
 export default function Home() {
-  return (
-    <div className={styles.page}>
-      <main className={styles.main}>
-        <Image
-          className={styles.logo}
-          src="https://nextjs.org/icons/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol>
-          <li>
-            Get started by editing <code>app/page.js</code>.
-          </li>
-          <li>Save and see your changes instantly.</li>
-        </ol>
+  const [tasks, setTasks] = useState([]);
+  const [inputValue, setInputValue] = useState('');
 
-        <div className={styles.ctas}>
-          <a
-            className={styles.primary}
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className={styles.logo}
-              src="https://nextjs.org/icons/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-            className={styles.secondary}
-          >
-            Read our docs
-          </a>
+  // Fetch tasks from Firestore when the component mounts
+  useEffect(() => {
+    const fetchTasks = async () => {
+      try {
+        const response = await fetch('/api/get-tasks', {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        });
+        
+        const data = await response.json();
+        if (response.ok) {
+          setTasks(data.tasks); // Assuming data.tasks is an array of {id, task}
+        } else {
+          console.error(data.message);
+        }
+      } catch (error) {
+        console.error('Error fetching tasks:', error);
+      }
+    };
+
+    fetchTasks(); // Call the function to fetch tasks on component mount
+  }, []);
+
+  const handleAddTask = async () => {
+    if (inputValue.trim()) {
+      try {
+        const response = await fetch('/api/add-task', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ task: inputValue }),
+        });
+  
+        const data = await response.json();
+        if (response.ok) {
+          console.log('Task added:', data);
+          // Update the tasks array to include both task text and id
+          setTasks([...tasks, { id: data.id, task: inputValue }]);
+          setInputValue(''); // Clear input after adding
+        } else {
+          console.error(data.message);
+        }
+      } catch (error) {
+        console.error('Error adding task:', error);
+      }
+    }
+  }
+
+  const handleDeleteTask = async (taskId) => {
+    try {
+      const response = await fetch(`/api/delete-task?id=${taskId}`, {
+        method: 'DELETE',
+      });
+  
+      const data = await response.json();
+      if (response.ok) {
+        console.log('Task deleted:', data);
+        setTasks(tasks.filter(task => task.id !== taskId)); // Use id from the tasks array
+      } else {
+        console.error(data.message);
+      }
+    } catch (error) {
+      console.error('Error deleting task:', error);
+    }
+  };
+
+  return (
+    <div className={styles.container}>
+      <div className={styles.todo}>
+        <h2>To-Do List<FaClipboardList /></h2>
+        <div className={styles.row}>
+          <input 
+            type="text" 
+            placeholder="Enter a task"
+            value={inputValue}
+            onChange={(e) => setInputValue(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                handleAddTask(); // Call the add task function when Enter is pressed
+              }
+            }}
+          />
+          <button onClick={handleAddTask}>Add</button>
         </div>
-      </main>
-      <footer className={styles.footer}>
-        <a
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="https://nextjs.org/icons/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="https://nextjs.org/icons/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="https://nextjs.org/icons/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
+
+        <div className={styles.tasksContainer}>
+          {tasks.map((task) => (
+            <button key={task.id} className={styles.taskButton} onClick={() => handleDeleteTask(task.id)}>
+              {task.task}
+            </button>
+          ))}
+        </div>
+
+      </div>
     </div>
   );
 }
