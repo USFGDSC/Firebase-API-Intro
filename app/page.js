@@ -21,7 +21,7 @@ export default function Home() {
         const data = await response.json();
         console.log(data);
         if (response.ok) {
-          setTasks(data.tasks); // Assuming data.tasks is an array of {id, task}
+          setTasks(data.tasks); // data.tasks is an array of {id, task}
         } else {
           console.error(data.message);
         }
@@ -34,7 +34,7 @@ export default function Home() {
   }, []);
 
   const handleAddTask = async () => {
-    if (inputValue.trim()) {
+    if (inputValue.trim()) { // check if not empty
       try {
         const response = await fetch('/api/add-task', {
           method: 'POST',
@@ -45,7 +45,7 @@ export default function Home() {
         });
   
         const data = await response.json();
-        if (response.ok) {
+        if (response.ok) { // checks if status code is 200
           console.log('Task added:', data);
           // Update the tasks array to include both task text and id
           setTasks([...tasks, { id: data.id, task: inputValue }]);
