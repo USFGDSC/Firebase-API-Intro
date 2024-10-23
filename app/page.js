@@ -19,6 +19,7 @@ export default function Home() {
         });
         
         const data = await response.json();
+        console.log(data);
         if (response.ok) {
           setTasks(data.tasks); // Assuming data.tasks is an array of {id, task}
         } else {

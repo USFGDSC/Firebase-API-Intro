@@ -1,4 +1,3 @@
-// pages/api/get-tasks.js
 import { db } from "../../../firebase";
 import { collection, getDocs } from "firebase/firestore";
 
